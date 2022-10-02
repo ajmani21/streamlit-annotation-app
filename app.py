@@ -146,7 +146,7 @@ def run(data_dir):
     # download button
     # with open("annotations.json", "w") as f:
     st.sidebar.download_button(
-        label="Download data as JSON",
+        label="Download annotated data",
         data=json.dumps(st.session_state["annotated_samples"]),
         file_name='annotations.txt',
         mime='text/plain',

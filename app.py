@@ -19,10 +19,13 @@ def save_json(data, file):
     with open(file, "w") as f:
         json.dump(data, f)
 
-
 def run(data_dir):
     if "load" not in st.session_state:
-        data = read_json(f"{data_dir}/unlabelled.json")
+        uploaded_file = st.file_uploader(label="Choose a file", accept_multiple_files=False)
+        if uploaded_file is None:
+            return
+        data = json.load(uploaded_file)           
+        # data = read_json(f"{data_dir}/unlabelled.json")
         courses = read_json(f"{data_dir}/course.json")
         broad_fields = read_json(f"{data_dir}/broad_fos.json")
         narrow_fields = read_json(f"{data_dir}/narrow_fos.json")
@@ -33,8 +36,7 @@ def run(data_dir):
         narrow_field_code_map = {v: k for k,v in narrow_fields.items()}
         specific_field_code_map = {v: k for k,v in specific_fields.items()}
         sm = StringMatching(list(list(courses.values())))
-        data = {i: v for i,v in enumerate(data)}
-        st.session_state["samples"] = data
+        st.session_state["samples"] = {i: v for i,v in enumerate(data)}
         st.session_state["courses"] = courses
         st.session_state["broad_fields"] = broad_fields
         st.session_state["narrow_fields"] = narrow_fields
@@ -47,6 +49,7 @@ def run(data_dir):
         st.session_state["sample_index"] = 0
         st.session_state["sm"] = sm
         st.session_state["load"] = 1
+        st.experimental_rerun()
     else:
         data = st.session_state["samples"]
         broad_fields = st.session_state["broad_fields"]
@@ -130,25 +133,26 @@ def run(data_dir):
                 "narrow_label": narrow_label,
                 "specific_label": specific_label,
                 "ignore_sample": ignore_sample}
-        if len(st.session_state["samples"]) == len(st.session_state["annotated_samples"]):
-            save_json(st.session_state["annotated_samples"], f"{data_dir}/annotations.json")
-            st.info("All annotations saved")
+        # if len(st.session_state["samples"]) == len(st.session_state["annotated_samples"]):
+        #     save_json(st.session_state["annotated_samples"], f"{data_dir}/annotations.json")
+        #     st.info("All annotations saved")
     
-    # def get_default_selections(sample):
-    #     annotated_samples = st.session_state["annotated_samples"]
-    #     if sample in annotated_samples:
-    #         broad_label_idx = annotated_samples[sample]["broad_label"]
-    #         narrow_label_idx = annotated_samples[sample]["narrow_label"]
-    #         specific_label_idx = annotated_samples[sample]["specific_label"]
-    #         ignore_val = annotated_samples[sample]["ignore"]
-    #     else:
-    #         pass
 
 
     # sidebar: show status
     n_samples = len(st.session_state["samples"])
     n_annotation_samples = len(st.session_state["annotated_samples"])
     
+    # download button
+    # with open("annotations.json", "w") as f:
+    st.sidebar.download_button(
+        label="Download data as JSON",
+        data=json.dumps(st.session_state["annotated_samples"]),
+        file_name='annotations.txt',
+        mime='text/plain',
+    )
+
+
     # current sample
     sample_id = st.session_state['sample_index']
     sample = data[sample_id]
@@ -165,9 +169,9 @@ def run(data_dir):
         st.button(label="Next", on_click=next_sample)
 
     # save annotations
-    if st.sidebar.button(label="Save annotations", help="save annotations done so far"):
-        save_json(st.session_state["annotated_samples"], f"{data_dir}/annotations.json")
-        st.info("Saved annotations done so far")
+    # if st.sidebar.button(label="Save annotations", help="save annotations done so far"):
+    #     save_json(st.session_state["annotated_samples"], f"{data_dir}/annotations.json")
+    #     st.info("Saved annotations done so far")
 
     # add sample
     if st.sidebar.button(label="Add Sample", help=f"add an extra sample #{n_samples+1} to annotate"):
